@@ -117,6 +117,7 @@ def run_case(label, script_name, newline):
 
 
 def main():
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     if IS_WINDOWS:
         cases = [("bat (LF)", "bulk-youtube-download.bat", b"\n"),
                  ("bat (CRLF)", "bulk-youtube-download.bat", b"\r\n")]
