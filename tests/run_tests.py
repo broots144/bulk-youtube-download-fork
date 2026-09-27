@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Runs the download script against stub yt-dlp/ffmpeg/ffprobe and checks the argv yt-dlp receives.
 
-Uses bulk-youtube-download.bat on Windows (with both LF and CRLF line endings) and bulk-youtube-download.sh elsewhere.
+Uses bulk-youtube-download.bat on Windows (with CRLF line endings, as released) and bulk-youtube-download.sh elsewhere.
 Nothing is downloaded: the stub yt-dlp only records its arguments.
 """
 import json
@@ -36,13 +36,24 @@ with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "argv.jsonl")
     f.write(json.dumps(sys.argv[1:]) + "\\n")
 """
 
+# On Windows the stub must be a real .exe like yt-dlp.exe: a .cmd stub would take over the calling batch file
+STUB_YTDLP_CS = """using System; using System.IO; using System.Text;
+class P { static int Main(string[] a) {
+  string log = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "argv.txt");
+  File.AppendAllText(log, string.Join("\\u001f", a) + "\\u001e", new UTF8Encoding(false));
+  return 0; } }
+"""
+CSC = os.path.join(os.environ.get("WINDIR", "C:\\Windows"), "Microsoft.NET", "Framework64", "v4.0.30319", "csc.exe")
+
 
 def make_stubs(bin_dir):
     with open(os.path.join(bin_dir, "yt_dlp_stub.py"), "w", encoding="utf-8") as f:
         f.write(STUB_YTDLP)
     if IS_WINDOWS:
-        with open(os.path.join(bin_dir, "yt-dlp.cmd"), "w") as f:
-            f.write('@echo off\r\nsetlocal DisableDelayedExpansion\r\n"%s" "%%~dp0yt_dlp_stub.py" %%*\r\n' % sys.executable)
+        src = os.path.join(bin_dir, "yt_dlp_stub.cs")
+        with open(src, "w", encoding="utf-8") as f:
+            f.write(STUB_YTDLP_CS)
+        subprocess.run([CSC, "/nologo", "/out:" + os.path.join(bin_dir, "yt-dlp.exe"), src], check=True)
         for name in ("ffmpeg", "ffprobe"):
             with open(os.path.join(bin_dir, name + ".cmd"), "w") as f:
                 f.write("@exit /b 0\r\n")
@@ -85,11 +96,17 @@ def run_case(label, script_name, newline):
                               stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=120)
         output = proc.stdout.decode("utf-8", errors="replace")
 
-        log_path = os.path.join(bin_dir, "argv.jsonl")
         calls = []
-        if os.path.exists(log_path):
-            with open(log_path, encoding="utf-8") as f:
-                calls = [json.loads(line) for line in f if line.strip()]
+        if IS_WINDOWS:
+            log_path = os.path.join(bin_dir, "argv.txt")
+            if os.path.exists(log_path):
+                with open(log_path, encoding="utf-8") as f:
+                    calls = [record.split("\x1f") for record in f.read().split("\x1e") if record]
+        else:
+            log_path = os.path.join(bin_dir, "argv.jsonl")
+            if os.path.exists(log_path):
+                with open(log_path, encoding="utf-8") as f:
+                    calls = [json.loads(line) for line in f if line.strip()]
 
         errors = []
         if proc.returncode != 0:
@@ -120,8 +137,8 @@ def run_case(label, script_name, newline):
 def main():
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     if IS_WINDOWS:
-        cases = [("bat (LF)", "bulk-youtube-download.bat", b"\n"),
-                 ("bat (CRLF)", "bulk-youtube-download.bat", b"\r\n")]
+        # Released .bat files use CRLF; cmd misreads labels and multibyte lines in LF batch files
+        cases = [("bat", "bulk-youtube-download.bat", b"\r\n")]
     else:
         cases = [("sh", "bulk-youtube-download.sh", b"\n")]
     results = [run_case(*case) for case in cases]
