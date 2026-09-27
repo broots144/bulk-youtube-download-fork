@@ -58,6 +58,12 @@ while IFS= read -r line || [[ -n "$line" ]]; do
   # Skip empty/brackets
   [[ -z "$line" || "$line" == "[" || "$line" == "]" ]] && continue
 
+  # Only accept http(s) URLs, so a line can never be read as a yt-dlp option
+  if [[ ! "$line" =~ ^[Hh][Tt][Tt][Pp][Ss]?://[^[:cntrl:]]+$ ]]; then
+    printf "⚠️ Skipping invalid link (not an http(s) URL) : %q\n" "$line"
+    continue
+  fi
+
   urls+=("$line")
 done < "$LINKS_FILE"
 
@@ -94,7 +100,7 @@ for i in "${!urls[@]}"; do
   echo "⏬ Downloading $current_url ..."
   echo
 
-  yt-dlp "${DEFAULT_ARGS[@]}" "$@" "$current_url"
+  yt-dlp "${DEFAULT_ARGS[@]}" "$@" -- "$current_url"
   echo
 done
 

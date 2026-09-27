@@ -44,6 +44,8 @@ Works with Youtube and [all other sites supported by `yt-dlp`](https://github.co
 > - Playlists
 > - Channel `/videos` pages
 > - Mixed URLs together
+>
+> Only `http://` and `https://` links are used. Any other line (for example one starting with `-`) is skipped with a warning, so a `links.txt` you got from someone else can't pass options to `yt-dlp`.
 
 - Open a terminal/command prompt in the folder where you put the script and the `links.txt` file
 - Run the script :
