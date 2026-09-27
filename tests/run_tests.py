@@ -77,7 +77,8 @@ def run_case(label, script_name, newline):
         env = dict(os.environ)
         env["PATH"] = bin_dir + os.pathsep + env["PATH"]
         if IS_WINDOWS:
-            cmd = ["cmd", "/d", "/c", script_name, "--no-mtime"]
+            # The script's emoji lines only parse under the UTF-8 code page
+            cmd = ["cmd", "/d", "/c", "chcp 65001 >nul & " + script_name + " --no-mtime"]
         else:
             cmd = ["bash", script_name, "--no-mtime"]
         proc = subprocess.run(cmd, cwd=run_dir, env=env, stdin=subprocess.DEVNULL,
