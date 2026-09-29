@@ -20,7 +20,9 @@ Works with Youtube and [all other sites supported by `yt-dlp`](https://github.co
   - For Windows, either run `winget install DenoLand.Deno` or `irm https://deno.land/install.ps1 | iex` in Powershell
 
 ## Usage
-- Download the script file [`bulk-youtube-download.bat`](https://github.com/EDM115/bulk-youtube-download/releases/latest/download/bulk-youtube-download.bat) (or [`bulk-youtube-download.sh`](https://github.com/EDM115/bulk-youtube-download/releases/latest/download/bulk-youtube-download.sh) for Linux/Mac) and put it somewhere you want
+- Download the script file [`bulk-youtube-download.bat`](https://github.com/broots144/bulk-youtube-download-fork/releases/latest/download/bulk-youtube-download.bat) (or [`bulk-youtube-download.sh`](https://github.com/broots144/bulk-youtube-download-fork/releases/latest/download/bulk-youtube-download.sh) for Linux/Mac) from this fork's latest release and put it somewhere you want
+  > [!IMPORTANT]  
+  > Use this fork's release (2026.2 or later). Upstream releases and this fork's older tags (2025.1, 2026.1) predate the `links.txt` validation described below, so a shared `links.txt` could pass options to `yt-dlp` with those scripts.
 - Create a text file called `links.txt` in the same folder as the script
 - Put your links in the `links.txt` file as a JSON array, for example :
   ```json
@@ -46,6 +48,7 @@ Works with Youtube and [all other sites supported by `yt-dlp`](https://github.co
 > - Mixed URLs together
 >
 > Only `http://` and `https://` links are used. Any other line (for example one starting with `-`) is skipped with a warning, so a `links.txt` you got from someone else can't pass options to `yt-dlp`.
+> A `links.txt` from someone else can still point `yt-dlp` at any `http(s)` address your computer can reach, including machines on your local network. Only use link lists from people you trust.
 
 - Open a terminal/command prompt in the folder where you put the script and the `links.txt` file
 - Run the script :

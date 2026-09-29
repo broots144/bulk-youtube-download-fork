@@ -134,6 +134,17 @@ def run_case(label, script_name, newline):
         shutil.rmtree(work, ignore_errors=True)
 
 
+def check_readme_links():
+    """README download links must point at this fork's releases: upstream and older tags ship the unvalidated scripts."""
+    with open(os.path.join(ROOT, "README.md"), encoding="utf-8") as f:
+        readme = f.read()
+    ok = ("EDM115/bulk-youtube-download/releases" not in readme
+          and "broots144/bulk-youtube-download-fork/releases/latest/download/bulk-youtube-download.sh" in readme
+          and "broots144/bulk-youtube-download-fork/releases/latest/download/bulk-youtube-download.bat" in readme)
+    print("%s readme download links" % ("PASS" if ok else "FAIL"))
+    return ok
+
+
 def main():
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     if IS_WINDOWS:
@@ -142,6 +153,7 @@ def main():
     else:
         cases = [("sh", "bulk-youtube-download.sh", b"\n")]
     results = [run_case(*case) for case in cases]
+    results.append(check_readme_links())
     sys.exit(0 if all(results) else 1)
 
 
